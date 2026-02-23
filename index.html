@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Terminal - Test WS Connections</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .terminal {
+            background: #0a0a0a;
+            color: #22c55e;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            border: 1px solid #1f2937;
+        }
+        .terminal-input {
+            background: transparent;
+            color: inherit;
+            border: none;
+            outline: none;
+            font-family: inherit;
+        }
+        .connection-status {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-connected { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+        .status-disconnected { background: #ef4444; }
+        .status-connecting { background: #f59e0b; animation: pulse 1s infinite; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .msg-bubble {
+            max-width: 80%;
+            margin: 4px 0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            word-break: break-all;
+        }
+        .msg-sent {
+            background: #1e40af;
+            color: #dbeafe;
+            margin-left: auto;
+            text-align: right;
+        }
+        .msg-received {
+            background: #1f2937;
+            color: #e5e7eb;
+            margin-right: auto;
+        }
+        .msg-system {
+            background: #44403c;
+            color: #fef3c7;
+            text-align: center;
+            margin: 8px auto;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+    <header class="bg-gray-800 border-b border-gray-700">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-network-wired text-blue-500 text-2xl"></i>
+                    <h1 class="text-xl font-bold">WebSocket Terminal</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center">
+                        <span id="status-indicator" class="connection-status status-disconnected"></span>
+                        <span id="status-text">Disconnected</span>
+                    </div>
+                    <button id="connect-btn" onclick="toggleConnection()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-medium transition">
+                        Connect
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Connection Settings -->
+            <aside class="lg:col-span-1 space-y-6">
+                <div class="bg-gray-800 rounded-lg p-5">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center">
+                        <i class="fas fa-cog mr-2 text-blue-400"></i>
+                        Koneksi
+                    </h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">URL WebSocket</label>
+                            <input type="text" id="ws-url" value="wss://echo.websocket.org" 
+                                   class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+                            <p class="text-xs text-gray-500 mt-1">Contoh: wss://echo.websocket.org</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Protocol (opsional)</label>
+                            <input type="text" id="ws-protocol" placeholder="e.g., chat, superchat"
+                                   class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Headers (JSON)</label>
+                            <textarea id="ws-headers" rows="3" placeholder='{"Authorization": "Bearer token"}'
+                                      class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Commands -->
+                <div class="bg-gray-800 rounded-lg p-5">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center">
+                        <i class="fas fa-bolt mr-2 text-yellow-400"></i>
+                        Perintah Cepat
+                    </h2>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="sendQuick('ping')" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm transition">ping</button>
+                        <button onclick="sendQuick('echo hello')" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm transition">echo hello</button>
+                        <button onclick="sendQuick('time')" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm transition">time</button>
+                        <button onclick="sendQuick('date')" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm transition">date</button>
+                        <button onclick="sendQuick('{"type":"subscribe","channel":"test"}')" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm transition">subscribe</button>
+                        <button onclick="sendQuick('{"type":"unsubscribe"}')" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm transition">unsubscribe</button>
+                    </div>
+                </div>
+
+                <!-- Statistics -->
+                <div class="bg-gray-800 rounded-lg p-5">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center">
+                        <i class="fas fa-chart-bar mr-2 text-green-400"></i>
+                        Statistik
+                    </h2>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Pesan Terkirim:</span>
+                            <span id="sent-count" class="font-mono">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Pesan Diterima:</span>
+                            <span id="received-count" class="font-mono">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Koneksi Aktif:</span>
+                            <span id="connection-duration" class="font-mono">0s</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Terminal -->
+            <main class="lg:col-span-2">
+                <div class="bg-gray-800 rounded-lg overflow-hidden flex flex-col h-[600px]">
+                    <!-- Terminal Header -->
+                    <div class="bg-gray-900 px-4 py-2 flex items-center justify-between border-b border-gray-700">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                            <span class="ml-2 text-sm text-gray-400">Terminal</span>
+                        </div>
+                        <button onclick="clearTerminal()" class="text-sm text-gray-400 hover:text-white transition">
+                            <i class="fas fa-trash-alt mr-1"></i> Clear
+                        </button>
+                    </div>
+
+                    <!-- Terminal Messages -->
+                    <div id="terminal-messages" class="flex-1 overflow-y-auto p-4 space-y-2">
+                        <div class="msg-bubble msg-system">
+                            WebSocket Terminal siap. Masukkan URL dan klik Connect.
+                        </div>
+                    </div>
+
+                    <!-- Input Area -->
+                    <div class="bg-gray-900 border-t border-gray-700 p-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-green-400 font-mono">></span>
+                            <input type="text" id="message-input" 
+                                   class="terminal-input flex-1 text-sm"
+                                   placeholder="Ketik pesan..."
+                                   onkeypress="if(event.key === 'Enter') sendMessage()">
+                            <button onclick="sendMessage()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-medium transition text-sm">
+                                Kirim
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Help Section -->
+                <div class="mt-6 bg-gray-800 rounded-lg p-5">
+                    <h2 class="text-lg font-semibold mb-3 flex items-center">
+                        <i class="fas fa-question-circle mr-2 text-cyan-400"></i>
+                        Bantuan
+                    </h2>
+                    <div class="text-sm text-gray-300 space-y-2">
+                        <p><strong>WebSocket Terminal</strong> adalah alat untuk menguji koneksi WebSocket, mengirim dan menerima pesan secara real-time.</p>
+                        <ul class="list-disc pl-5 space-y-1 text-gray-400">
+                            <li>Masukkan URL WebSocket (ws:// atau wss://)</li>
+                            <li>Klik Connect untuk membuka koneksi</li>
+                            <li>Ketik pesan dan tekan Enter atau tombol Kirim</li>
+                            <li>Gunakan tombol Perintah Cepat untuk template pesan umum</li>
+                            <li>Statistik menampilkan jumlah pesan dan durasi koneksi</li>
+                        </ul>
+                        <p class="text-gray-500 mt-2">Server echo akan mengirimkan kembali pesan yang Anda kirim. Untuk server lain, periksa dokumentasi protokolnya.</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
