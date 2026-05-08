@@ -2,6 +2,13 @@
 
 Interactive WebSocket client for testing and debugging real-time connections.
 
+
+## 🚀 Live Demo
+
+Coba aplikasi secara langsung: [websocket-terminal](https://personalbotai.github.io/websocket-terminal/)
+
+[![Deploy to GitHub Pages](https://img.shields.io/badge/Deploy-GitHub%20Pages-blue?logo=github)](https://personalbotai.github.io/websocket-terminal/)
+
 ## Features
 - Connect to any WS/WSS endpoint
 - Custom protocols and headers (JSON format)
