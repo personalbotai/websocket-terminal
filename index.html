@@ -6,60 +6,7 @@
     <title>WebSocket Terminal - Test WS Connections</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .terminal {
-            background: #0a0a0a;
-            color: #22c55e;
-            font-family: 'Fira Code', 'Consolas', monospace;
-            border: 1px solid #1f2937;
-        }
-        .terminal-input {
-            background: transparent;
-            color: inherit;
-            border: none;
-            outline: none;
-            font-family: inherit;
-        }
-        .connection-status {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 8px;
-        }
-        .status-connected { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
-        .status-disconnected { background: #ef4444; }
-        .status-connecting { background: #f59e0b; animation: pulse 1s infinite; }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        .msg-bubble {
-            max-width: 80%;
-            margin: 4px 0;
-            padding: 8px 12px;
-            border-radius: 8px;
-            word-break: break-all;
-        }
-        .msg-sent {
-            background: #1e40af;
-            color: #dbeafe;
-            margin-left: auto;
-            text-align: right;
-        }
-        .msg-received {
-            background: #1f2937;
-            color: #e5e7eb;
-            margin-right: auto;
-        }
-        .msg-system {
-            background: #44403c;
-            color: #fef3c7;
-            text-align: center;
-            margin: 8px auto;
-            font-size: 0.875rem;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen">
     <header class="bg-gray-800 border-b border-gray-700">
